@@ -1,0 +1,922 @@
+/*
+ * components.css - 核心组件样式
+ * 包含：基础布局、首页样式、导航栏、3D翻转拍立得、贴纸里程碑
+ */
+
+/* =========================================
+   0. 基础布局容器
+   ========================================= */
+.month-page,
+.summary-page {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 140px 20px;
+}
+
+/* 页面背景层 */
+.page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+}
+
+/* 内容容器 */
+.page-content {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    margin-top: 20px;
+    animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   1. 首页样式 (Home Page) - 炫酷视差版
+   ========================================= */
+.home-page {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 柔和渐变背景 (备用) */
+    background: linear-gradient(135deg, var(--home-gradient-start) 0%, var(--home-gradient-end) 100%);
+}
+
+.home-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 五彩多肉背景 + 深色遮罩 */
+    /* 移除深色背景图，使用生成的梦幻背景 */
+    background-image: url("/images/home-bg-dreamy.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1;
+    z-index: 0; /* 提升层级，确保不被父容器背景遮挡 */
+    filter: blur(10px); /* 模糊背景，突出前景卡片 */
+    transform: scale(1.1); /* 放大以避免模糊边缘露白 */
+}
+
+/* 首页视差容器 */
+.home-parallax-scene {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none; /* 允许鼠标穿透点击背景（如果有交互） */
+    overflow: hidden;
+}
+
+/* 首页中心内容 */
+.home-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    pointer-events: none; /* 让鼠标事件穿透到下面的装饰卡片（如果需要），但在glass card上恢复 */
+}
+
+/* 巨型毛玻璃卡片容器 (核心还原点) */
+.home-glass-card {
+    pointer-events: auto;
+    background: var(--home-card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid var(--home-card-border);
+    box-shadow:
+        0 20px 60px rgba(180, 160, 200, 0.15),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+    border-radius: 40px;
+    padding: 60px 80px;
+    text-align: center;
+    max-width: 800px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* 垂直居中 */
+    transform: translateY(20px);
+    opacity: 0;
+    animation: 
+        glassCardIn 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+        breathe 6s ease-in-out infinite 1s; /* 呼吸动画 */
+    
+    /* Organic Blob Shape */
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transition: border-radius 1s ease-in-out;
+}
+
+.home-glass-card:hover {
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; /* 悬停变圆 */
+}
+
+@keyframes glassCardIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.04); } /* 加强呼吸幅度 */
+}
+
+
+
+@keyframes jelly {
+    0% { transform: scale(1, 1); }
+    30% { transform: scale(1.25, 0.75); }
+    40% { transform: scale(0.75, 1.25); }
+    50% { transform: scale(1.15, 0.85); }
+    65% { transform: scale(0.95, 1.05); }
+    75% { transform: scale(1.05, 0.95); }
+    100% { transform: scale(1, 1); }
+}
+
+@keyframes cardFadeIn {
+    0% { opacity: 0; transform: scale(0.5) rotate(var(--rotate, 0deg)); }
+    70% { opacity: 1; transform: scale(1.1) rotate(var(--rotate, 0deg)); }
+    100% { opacity: 1; transform: scale(1) rotate(var(--rotate, 0deg)); }
+} 
+
+/* 首页背景装饰卡片优化 - 有机形态 + 呼吸感 */
+.home-parallax-scene .photo-card {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.9) !important;
+    background: #fff !important;
+    opacity: 0; /* 初始隐藏 */
+    
+    /* 有机形态 (统一基础，通过旋转产生差异) */
+    border-radius: 55% 45% 30% 70% / 50% 30% 70% 50%;
+    
+    /* 动画序列: 先进场(0.8s) + 然后呼吸(无限循环) */
+    /* 呼吸动画延迟 = 进场时间 + 初始延迟 */
+    animation: 
+        cardFadeIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) var(--delay, 0s) forwards,
+        breathe-float 5s ease-in-out infinite alternate calc(var(--delay, 0s) + 0.8s);
+}
+
+/* 稍微改变不同卡片的形状和动画节奏，避免雷同 */
+.home-parallax-scene .parallax-layer:nth-child(2n) .photo-card {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation-duration: 6s;
+    animation-delay: 0.5s;
+}
+
+.home-parallax-scene .parallax-layer:nth-child(3n) .photo-card {
+    border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%;
+    animation-duration: 7s;
+    animation-delay: 1s;
+}
+
+/* 自定义呼吸动画 (包含旋转保持) - 加强版 */
+@keyframes breathe-float {
+    0% { transform: scale(1) rotate(var(--rotate, 0deg)); }
+    100% { transform: scale(1.1) rotate(var(--rotate, 0deg)); } /* 幅度 1.05 -> 1.1 */
+}
+
+.home-parallax-scene .photo-card img {
+    filter: none; /* 移除模糊 */
+    opacity: 1;
+    transition: transform 0.3s ease;
+    border-radius: inherit; /* 图片跟随容器形状 */
+}
+
+/* 鼠标悬停时微调 */
+.home-parallax-scene .photo-card:hover {
+    transform: scale(1.1) !important; /* 悬停放大权重高 */
+    z-index: 100;
+    border-radius: 50%; /* 悬停变圆 */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.home-logo-icon {
+    font-size: 48px;
+
+    margin-bottom: 24px;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.home-title {
+    font-family: var(--font-heading);
+    font-size: 88px; /* 加大字号 */
+    font-weight: 700; /* 加粗 */
+    line-height: 1.1;
+    margin-bottom: 32px;
+    
+    /* 渐变文字 */
+    background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%); /* 清新蓝绿渐变 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    
+    /* 白色描边以确保在浅色背景上可见 */
+    text-shadow: 0px 4px 12px rgba(0,0,0,0.1); 
+    
+    opacity: 1; 
+    transform: none;
+}
+
+.home-subtitle {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 48px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 1;
+    transform: none;
+}
+
+.home-cta {
+    padding: 18px 64px;
+    font-size: 20px;
+    font-weight: 600;
+    background: white;
+    color: #0f172a;
+    border-radius: 16px; /* 方圆角更现代 */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+    transform: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.home-cta:hover {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+    background: #fff;
+    animation: jelly 0.5s ease; /* 果冻动画 */
+}
+
+/* 视差卡片通用样式优化 */
+.parallax-card {
+    position: absolute;
+    /* 移除内部背景模糊，改用图片本身的质感，或仅轻微叠加 */
+    background: #000;
+    border-radius: 20px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); /* 更深的阴影 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s linear;
+    will-change: transform;
+    overflow: hidden; /* 裁剪图片 */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* 边缘高光 */
+}
+
+.parallax-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+}
+
+.parallax-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.parallax-card-label {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 进场动画激活类 (不再需要单独控制，如果你想让内部元素单独动也可以，但现在父容器统一动更稳) */
+.home-title.visible,
+.home-subtitle.visible,
+.home-cta.visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* =========================================
+   2. 导航栏 (Navigation Bar)
+   ========================================= */
+.navigation-bar {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 40, 50, 0.85); /* 深色背景 */
+    backdrop-filter: blur(20px);
+    padding: 16px 32px;
+    border-radius: 100px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+    width: 600px; /* 固定宽度，更有播放器感 */
+    max-width: 90vw;
+}
+
+/* 播放器两端标签 */
+.nav-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nav-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: var(--month-0-accent);
+    transform: scale(1.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-color: transparent;
+}
+
+.nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    box-shadow: none;
+    transform: none;
+}
+
+.nav-progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    height: 100%;
+}
+
+
+
+.nav-progress-text {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 600;
+    background: rgba(0,0,0,0.4);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.nav-progress:hover .nav-progress-text {
+    opacity: 1;
+}
+
+.nav-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.nav-progress-value {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); /* 发光蓝青色 */
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.nav-progress-value::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+/* =========================================
+   3. 通用样式恢复
+   ========================================= */
+.month-title {
+    font-family: var(--font-heading);
+    font-size: 64px; /* 比首页稍小 */
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+    
+    /* 渐变文字 */
+    background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    
+    text-shadow: 0px 4px 12px rgba(0,0,0,0.1); 
+}
+
+.month-subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    font-family: var(--font-handwriting);
+    text-align: center;
+}
+
+/* =========================================
+   4. 主内容卡片 (Content Card)
+   ========================================= */
+.content-card {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.75); /* 更透亮 */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    
+    /* Organic Shape */
+    border-radius: 40px 40px 40px 40px; 
+    
+    padding: 40px;
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.08),
+        inset 0 0 20px rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s ease;
+    
+    /* 呼吸动画 */
+    animation: breathe 8s ease-in-out infinite;
+    padding: 40px;
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.month-tag {
+    display: inline-block;
+    padding: 6px 16px;
+    background: #fff;
+    color: var(--text-primary);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-story-section {
+    margin-top: 24px;
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 24px;
+    border-radius: 20px;
+}
+
+.story-title,
+.milestones-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.story-content {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    text-align: justify;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.edit-btn:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================
+   5. 3D 翻转拍立得
+   ========================================= */
+.flip-card-container {
+    background-color: transparent;
+    width: 100%;
+    max-width: 400px;
+    height: 340px;
+    perspective: 1000px;
+    margin: 0 auto 32px auto;
+    cursor: pointer;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+}
+
+.flip-card-container:not(:has(.photo-preview-overlay:hover)):hover
+    .flip-card-inner,
+.flip-card-container.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 4px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.flip-card-front {
+    background-color: #fff;
+    /* 纸质纹理 */
+    background-image: linear-gradient(to bottom right, #ffffff, #f8f8f8);
+    padding: 16px 16px 50px 16px;
+    transform: rotate(0deg);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.polaroid-img-wrapper {
+    width: 100%;
+    height: 240px;
+    overflow: hidden;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eee;
+    position: relative;
+}
+
+.polaroid-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-preview-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid #eee;
+}
+
+.flip-card-container:hover .photo-preview-overlay {
+    opacity: 1;
+    z-index: 10;
+}
+
+.photo-change-btn,
+.photo-delete-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+}
+
+.photo-change-btn:hover,
+.photo-delete-btn:hover {
+    transform: scale(1.1);
+    background: #f5f5f5;
+}
+
+.flip-card-back {
+    background-color: #fffafa;
+    color: #333;
+    transform: rotateY(180deg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+    background-size: 20px 20px;
+    border: 1px solid #ddd;
+}
+
+.handwritten-note {
+    font-family: var(--font-handwriting);
+    font-size: 24px;
+    color: #555;
+    line-height: 1.6;
+    transform: rotate(-2deg);
+}
+
+.note-date {
+    font-family: var(--font-family);
+    font-size: 14px;
+    color: #999;
+    margin-top: 24px;
+    border-top: 2px dashed #ddd;
+    padding-top: 8px;
+}
+
+/* =========================================
+   6. 贴纸风格里程碑
+   ========================================= */
+.milestones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.sticker-item {
+    position: relative;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    cursor: default;
+}
+
+.sticker-item.completed {
+    background: #fff;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: rotate(var(--rotation, 0deg));
+}
+
+.sticker-item.completed:hover {
+    transform: scale(1.05) rotate(0deg) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+}
+
+.sticker-badge {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+    filter: grayscale(100%);
+    transition: all 0.4s ease;
+}
+
+.sticker-item.completed .sticker-badge {
+    opacity: 1;
+    filter: grayscale(0%);
+    animation: badgePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sticker-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.milestone-value-tag {
+    margin-top: 6px;
+    font-size: 12px;
+    background: var(--month-0-accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: var(--text-primary);
+}
+
+.sticker-check {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #4caf50;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sticker-item.completed .sticker-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@keyframes badgePop {
+    0% {
+        transform: scale(0.5);
+    }
+    50% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* =========================================
+   7. 动态背景漂浮元素
+   ========================================= */
+.ambient-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.float-icon {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0.6;
+    animation: floatUp var(--duration, 10s) linear infinite;
+    filter: blur(1px);
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(110vh) rotate(0deg) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(360deg) scale(1);
+        opacity: 0;
+    }
+}
+
+.decoration-image {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.decoration-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    filter: blur(40px);
+}
+
+/* 装饰位置定义 - 已废弃，使用单一背景图 */
+.decoration-img {
+    display: none;
+}
+
+/* =========================================
+   8. 响应式调整
+   ========================================= */
+@media (max-width: 768px) {
+    .home-title {
+        font-size: 48px;
+    }
+
+    .page-content {
+        margin-top: 0;
+    }
+
+    .content-card {
+        padding: 24px;
+        border-radius: 24px;
+    }
+
+    .flip-card-container {
+        height: 300px;
+    }
+
+    .polaroid-img-wrapper {
+        height: 200px;
+    }
+
+    .navigation-bar {
+        width: 90%;
+        min-width: unset;
+        bottom: 20px;
+        padding: 10px 20px;
+        gap: 16px;
+    }
+
+    .nav-progress {
+        min-width: 80px;
+    }
+
+    .parallax-card {
+        transform: scale(0.7); /* 手机端缩小装饰卡片 */
+    }
+}

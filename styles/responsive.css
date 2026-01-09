@@ -1,0 +1,227 @@
+/**
+ * 响应式样式
+ * 桌面端（≥1440px）、平板端（768px-1439px）、手机端（<768px）
+ */
+
+/* ==================== 桌面端样式（≥1440px）==================== */
+@media screen and (min-width: 1440px) {
+  .content-card {
+    width: 500px;
+  }
+
+  .decoration-image {
+    width: 140px;
+    height: 140px;
+  }
+
+  .nav-bar {
+    padding: 0 var(--spacing-xxl);
+  }
+
+  .page-content {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* ==================== 平板端样式（768px-1439px）==================== */
+@media screen and (min-width: 768px) and (max-width: 1439px) {
+  .content-card {
+    width: 90%;
+    max-width: 600px;
+  }
+
+  .decoration-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* 调整装饰图片位置 */
+  .decoration-left-top { left: 2%; }
+  .decoration-left-middle { left: 1%; }
+  .decoration-left-bottom { left: 2%; }
+  .decoration-right-top { right: 2%; }
+  .decoration-right-middle { right: 1%; }
+  .decoration-right-bottom { right: 2%; }
+
+  .nav-bar {
+    padding: 0 var(--spacing-lg);
+  }
+
+  .btn-lg {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-md);
+  }
+}
+
+/* ==================== 手机端样式（<768px）==================== */
+@media screen and (max-width: 767px) {
+  :root {
+    --nav-height: 70px;
+  }
+
+  .content-card {
+    width: 95%;
+    max-width: none;
+  }
+
+  /* 隐藏装饰图片 */
+  .decoration-image {
+    display: none;
+  }
+
+  /* 导航栏调整 */
+  .nav-bar {
+    padding: 0 var(--spacing-md);
+    bottom: 16px;
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+    border-radius: var(--card-radius);
+    height: 64px;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-progress-value {
+    font-size: var(--font-size-lg);
+  }
+
+  /* 页面内容调整 */
+  .page-content {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--nav-height) + var(--spacing-xl) + 16px);
+  }
+
+  /* 卡片内边距调整 */
+  .card,
+  .content-card {
+    padding: var(--spacing-md);
+  }
+
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--spacing-md);
+  }
+
+  /* 按钮调整 */
+  .btn-lg {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-md);
+  }
+
+  /* 标题字体调整 */
+  .hero-title {
+    font-size: var(--font-size-xxl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--font-size-md);
+  }
+
+  /* 模态框调整 */
+  .modal {
+    width: 95%;
+    padding: var(--spacing-lg);
+  }
+
+  /* 照片上传区域调整 */
+  .photo-upload {
+    aspect-ratio: 3/2;
+  }
+
+  .photo-preview {
+    aspect-ratio: 3/2;
+  }
+}
+
+/* ==================== 小屏手机（<375px）==================== */
+@media screen and (max-width: 374px) {
+  :root {
+    --font-size-hero: 32px;
+    --font-size-xxl: 24px;
+    --font-size-xl: 20px;
+  }
+
+  .content-card {
+    width: 100%;
+    border-radius: var(--spacing-md);
+  }
+
+  .nav-bar {
+    left: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
+
+  .btn-lg {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* ==================== 横屏模式 ==================== */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .page-content {
+    padding-top: var(--spacing-md);
+    padding-bottom: calc(var(--nav-height) + var(--spacing-md));
+  }
+
+  .content-card {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .nav-bar {
+    height: 56px;
+  }
+}
+
+/* ==================== 高分辨率屏幕 ==================== */
+@media screen and (min-width: 1920px) {
+  .content-card {
+    width: 550px;
+  }
+
+  .decoration-image {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+/* ==================== 打印样式 ==================== */
+@media print {
+  .nav-bar,
+  .decoration-image,
+  .btn {
+    display: none !important;
+  }
+
+  .page-content {
+    padding: 0;
+  }
+
+  .content-card {
+    width: 100%;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+}
+
+/* ==================== 减少动画偏好 ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== 深色模式支持（可选）==================== */
+@media (prefers-color-scheme: dark) {
+  /* 保持原有设计，不自动切换深色模式 */
+  /* 如需支持深色模式，可在此添加样式 */
+}
