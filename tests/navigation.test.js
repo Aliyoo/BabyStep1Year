@@ -5,13 +5,15 @@
  * Validates: Requirements 3.2, 3.3, 3.6
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import * as fc from 'fast-check';
 import {
   calculateProgress,
   canNavigatePrev,
-  canNavigateNext
+  canNavigateNext,
+  initKeyboardNavigation
 } from '../scripts/navigation.js';
+import { router } from '../scripts/router.js';
 
 describe('导航栏属性测试', () => {
   /**
@@ -140,6 +142,59 @@ describe('导航栏属性测试', () => {
         ),
         { numRuns: 100 }
       );
+    });
+  });
+
+  describe('键盘导航测试', () => {
+    let nextSpy, prevSpy;
+
+    beforeEach(() => {
+      // Mock router methods
+      nextSpy = vi.spyOn(router, 'nextMonth');
+      prevSpy = vi.spyOn(router, 'prevMonth');
+
+      // Initialize keyboard nav
+      initKeyboardNavigation();
+
+      // Reset router state
+      router.currentPage = 'month';
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('ArrowRight 应调用 nextMonth', () => {
+      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+      document.dispatchEvent(event);
+      expect(nextSpy).toHaveBeenCalled();
+    });
+
+    it('ArrowLeft 应调用 prevMonth', () => {
+      const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+      document.dispatchEvent(event);
+      expect(prevSpy).toHaveBeenCalled();
+    });
+
+    it('当不在 month 页面时，不应导航', () => {
+      router.currentPage = 'home';
+      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+      document.dispatchEvent(event);
+      expect(nextSpy).not.toHaveBeenCalled();
+    });
+
+    it('当在输入框中输入时，不应导航', () => {
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      input.focus();
+
+      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+      // Dispatch on the input element to bubble up
+      input.dispatchEvent(event);
+
+      expect(nextSpy).not.toHaveBeenCalled();
+
+      document.body.removeChild(input);
     });
   });
 });
