@@ -120,6 +120,28 @@ export function initNavigationInteractions(month) {
 }
 
 /**
+ * 初始化键盘导航
+ * @description 允许使用左右方向键切换月份
+ */
+export function initKeyboardNavigation() {
+  document.addEventListener('keydown', (e) => {
+    // 忽略在输入框或可编辑元素中的按键
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+      return;
+    }
+
+    // 只在月份页面响应键盘导航
+    if (router.currentPage === 'month') {
+      if (e.key === 'ArrowLeft') {
+        router.prevMonth();
+      } else if (e.key === 'ArrowRight') {
+        router.nextMonth();
+      }
+    }
+  });
+}
+
+/**
  * 更新导航栏状态
  * @param {number} month - 当前月份
  */

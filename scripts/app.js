@@ -9,6 +9,7 @@ import { stateManager, MONTHS_CONFIG } from "./state-manager.js";
 import {
   renderNavigationBar,
   initNavigationInteractions,
+  initKeyboardNavigation,
   calculateProgress,
 } from "./navigation.js";
 import {
@@ -466,6 +467,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 初始渲染
 
   renderPage(router.currentPage, router.currentMonth);
+
+  // 初始化键盘导航
+  initKeyboardNavigation();
 
   // 初始化光标特效
 
