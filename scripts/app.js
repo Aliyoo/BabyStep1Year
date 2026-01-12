@@ -224,6 +224,11 @@ function renderMonthPage(month) {
     return;
   }
 
+  // 生成动态环境图标
+  const ambientIcons = generateAmbientIcons(month);
+
+  app.innerHTML = `
+    <div class="month-page">
       <!-- 统一梦幻背景 -->
       <div class="page-background" id="page-background"></div>
 
