@@ -26,6 +26,8 @@ import {
 } from "./parallax-effect.js";
 import MouseParallax from "./mouse-parallax.js";
 import CursorEffects from "./cursor-effects.js";
+import { galleryOverlay } from "./gallery-overlay.js"; // Import new component
+import { initDemoData } from "./demo-data.js";
 
 // 跟踪上一个月份，用于页面切换动画
 let previousMonth = null;
@@ -207,9 +209,10 @@ function generateAmbientIcons(month) {
   return `<div class="ambient-layer">${icons.join("")}</div>`;
 }
 
+
 /**
- * 渲染月份页面
- * Requirements: 2.1, 2.3, 2.5
+ * 渲染月份页面 (Redesigned)
+ * Requirements: Split Layout, Visual & Text Columns, Multi-Photo Gallery
  */
 function renderMonthPage(month) {
   const app = document.getElementById("app");
@@ -227,6 +230,20 @@ function renderMonthPage(month) {
   // 生成动态环境图标
   const ambientIcons = generateAmbientIcons(month);
 
+  // 获取主要里程碑
+  const keyMilestone = monthData?.milestones?.find(m => m.completed) || config.defaultMilestones[0];
+
+  // Gallery Logic: Random Photo & Stack Effect
+  const photos = monthData?.photos || [];
+  const hasPhotos = photos.length > 0;
+  // Pick random photo if available, otherwise null (will show placeholder)
+  // On every render/refresh this picks a new one
+  const displayPhoto = hasPhotos ? photos[Math.floor(Math.random() * photos.length)] : null;
+  const showStackEffect = photos.length > 1;
+
+  // Get all milestones for display
+  const allMilestones = monthData?.milestones || config.defaultMilestones;
+
   app.innerHTML = `
     <div class="month-page">
       <!-- 统一梦幻背景 -->
@@ -235,35 +252,192 @@ function renderMonthPage(month) {
       <!-- 动态环境层 -->
       ${ambientIcons}
 
-      <!-- 装饰图片区域 (保持原有视差结构) -->
+      <!-- 装饰图片区域 -->
       <div class="decoration-image decoration-left-top month-decoration mouse-parallax" data-depth="0.2" data-delay="100">
-        <div class="decoration-placeholder" style="background: ${config.accentColor}40"></div>
-      </div>
-      <div class="decoration-image decoration-left-middle month-decoration mouse-parallax" data-depth="0.4" data-delay="200">
-        <div class="decoration-placeholder" style="background: ${config.accentColor}30"></div>
-      </div>
-      <div class="decoration-image decoration-left-bottom month-decoration mouse-parallax" data-depth="0.15" data-delay="300">
-        <div class="decoration-placeholder" style="background: ${config.accentColor}40"></div>
-      </div>
-      <div class="decoration-image decoration-right-top month-decoration mouse-parallax" data-depth="-0.2" data-delay="150">
-        <div class="decoration-placeholder" style="background: ${config.accentColor}30"></div>
-      </div>
-      <div class="decoration-image decoration-right-middle month-decoration mouse-parallax" data-depth="-0.4" data-delay="250">
         <div class="decoration-placeholder" style="background: ${config.accentColor}40"></div>
       </div>
       <div class="decoration-image decoration-right-bottom month-decoration mouse-parallax" data-depth="-0.15" data-delay="350">
         <div class="decoration-placeholder" style="background: ${config.accentColor}30"></div>
       </div>
 
+      <!-- 新的分割布局容器 -->
+      <div class="split-layout-container" id="split-layout-container" aria-label="${month}个月成长记录">
+        
+        <!-- 左侧：文字与导航 -->
+        <article class="layout-text-col" id="layout-text-col">
+          <span class="month-label-caps">${month} MONTH</span>
+          <h1 class="hero-title-large">${config.englishTitle}</h1>
+          <h2 class="hero-subtitle-large">${config.title}.</h2>
+          
+          <p class="story-text-body" id="story-display">
+            ${monthData?.story || config.defaultStory}
+          </p>
+
+          <div class="inline-nav-container">
+             ${month < 12 ? `
+             <button class="btn-nav-next" id="nav-next-btn">
+               Next Moment <span>→</span>
+             </button>` : ''}
+             
+             ${month > 0 ? `
+             <button class="btn-nav-icon-only" id="nav-prev-btn" aria-label="Previous" title="Previous Month">
+               ←
+             </button>` : ''}
+             
+             <button class="btn-floating-edit edit-btn" aria-label="编辑内容" title="Edit Content">
+               ✏️
+             </button>
+          </div>
+        </article>
+
+        <!-- 右侧：视觉与里程碑 -->
+        <div class="layout-visual-col" id="layout-visual-col">
+          <!-- 倾斜的照片卡片 -->
+          <div class="tilted-photo-card ${showStackEffect ? 'stack-effect' : ''}" id="photo-card-container" style="cursor: pointer;">
+            <div class="card-image-wrapper" id="photo-section-${month}">
+              ${displayPhoto 
+                ? `<img src="${displayPhoto}" alt="Month ${month} Memory" style="width:100%; height:100%; object-fit:cover;">`
+                : `<div class="photo-placeholder-enhanced" style="color:${config.accentColor}">
+                     <span class="placeholder-icon">📷</span>
+                     <span class="placeholder-text">点击上传宝宝照片</span>
+                   </div>`
+              }
+            </div>
+            
+            ${showStackEffect ? `<div class="photo-count-badge">+${photos.length-1}</div>` : ''}
+          </div>
+
+          <!-- 迷你里程碑网格 -->
+          <div class="mini-milestones-grid">
+            ${allMilestones.map(m => `
+              <div class="mini-milestone-item ${m.completed ? 'completed' : ''}">
+                <span class="mini-milestone-label">${m.label}</span>
+                <span class="mini-milestone-value">${m.value || '待记录'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 底部保留进度条作为辅助 (可选) -->
+       ${renderNavigationBar(month)}
+    </div>
+  `;
+
+  // 触发月份页面动画
+  requestAnimationFrame(() => {
+    initMonthAnimations(month);
+    initNavigationInteractions(month); 
+    
+    // Bind Gallery Open
+    const photoCard = document.getElementById('photo-card-container');
+    if (photoCard) {
+        photoCard.addEventListener('click', (e) => {
+            galleryOverlay.open(month);
+        });
+    }
+  });
+}
+
+
+
+/**
+ * 渲染总结页面 (12个月 - 周岁庆典)
+ * Requirements: 12.1-12.8, 4.1-4.5
+ */
+/**
+ * 渲染总结页面 (12个月 - 周岁庆典)
+ * Requirements: 12.1-12.8, 4.1-4.5
+ */
+function renderSummaryPage(config, monthData) {
+  const app = document.getElementById("app");
+  const month = 12;
+
+  // 生成动态环境图标 (庆典风格)
+  const ambientIcons = generateAmbientIcons(month);
+
+  // 获取彩虹渐变背景
+  const gradient = animationController.getMonthGradient(month);
+
+  // Gallery Logic for Summary
+  const photos = monthData?.photos || [];
+  const hasPhotos = photos.length > 0;
+  const displayPhoto = hasPhotos ? photos[Math.floor(Math.random() * photos.length)] : null;
+  const showStackEffect = photos.length > 1;
+
+  app.innerHTML = `
+    <div class="summary-page">
+      <!-- 彩虹背景 -->
+      <div class="page-background" id="page-background" style="background: ${gradient}"></div>
+
+      <!-- 动态环境层 -->
+      ${ambientIcons}
+
+      <!-- 装饰图片区域 (更多漂浮物) -->
+      <div class="decoration-image decoration-left-top month-decoration mouse-parallax" data-depth="0.2" data-delay="100">
+        <div class="decoration-placeholder" style="background: rgba(255, 100, 100, 0.2)"></div>
+      </div>
+      <div class="decoration-image decoration-right-bottom month-decoration mouse-parallax" data-depth="-0.2" data-delay="150">
+        <div class="decoration-placeholder" style="background: rgba(100, 200, 255, 0.2)"></div>
+      </div>
+       <div class="decoration-image decoration-right-top month-decoration mouse-parallax" data-depth="-0.3" data-delay="200">
+        <div class="decoration-placeholder" style="background: rgba(255, 200, 100, 0.2)"></div>
+      </div>
+
       <!-- 内容卡片区域 -->
-      <article class="page-content" aria-label="${month}个月成长记录">
-        <span class="month-tag" aria-label="月份标签">${month}个月</span>
-        <h1 class="month-title">${config.title}</h1>
-        <p class="month-subtitle">${config.englishTitle}</p>
+      <article class="page-content" aria-label="周岁庆典">
+        <span class="month-tag" aria-label="里程碑标签">1周岁啦</span>
+        <h1 class="month-title">周岁庆典</h1>
+        <p class="month-subtitle">Happy First Birthday!</p>
 
         <!-- Content Card 组件 -->
         <div class="content-card month-content-card" id="content-card">
-          ${renderContentCard(month, config, monthData)}
+           <!-- 照片展示区 (New Gallery Style) -->
+           <div class="card-photo-section" id="photo-section-${month}" style="cursor: pointer; position: relative;">
+              ${displayPhoto 
+                ? `<img src="${displayPhoto}" alt="Year Summary Memory" style="width:100%; height:100%; object-fit:cover; border-radius: 12px;">`
+                : `<div class="photo-placeholder" style="color: #ff9a9e; font-size: 40px; display:flex; justify-content:center; align-items:center; height:200px; background:#fff0f0; border-radius:12px;">🎂</div>`
+              }
+              ${showStackEffect ? `<div style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.5); color:white; padding:4px 8px; border-radius:12px; font-size:12px;">+${photos.length-1}</div>` : ''}
+              
+              <!-- Hint to render stack effect visually if needed, but summary card is flat usually. 
+                   We keep it simple: just image and badge. -->
+           </div>
+
+           <!-- 总结故事区 -->
+           <div class="card-story-section">
+             <h2 class="story-title">🎂 成长总结</h2>
+             <p class="story-content">${monthData?.story || config.defaultStory}</p>
+           </div>
+
+           <!-- 年度成就 -->
+           <div class="card-milestones-section">
+             <h2 class="milestones-title">🌟 年度成就</h2>
+             <div class="milestones-grid">
+               ${config.defaultMilestones
+                 .map(
+                   (m) => `
+                 <div class="sticker-item completed" style="--rotation: ${Math.random() * 10 - 5}deg">
+                   <div class="sticker-badge">🏅</div>
+                   <span class="sticker-label">${m.label}</span>
+                   ${m.value ? `<span class="milestone-value-tag">${m.value}</span>` : ""}
+                 </div>
+               `,
+                 )
+                 .join("")}
+             </div>
+           </div>
+
+           <!-- 行动按钮 -->
+           <div class="card-actions" style="justify-content: center; gap: 16px;">
+             <button class="btn btn-primary" onclick="window.location.hash='/'">
+               ↺ 重新回顾
+             </button>
+             <button class="btn btn-secondary edit-btn" aria-label="编辑周岁记录">
+               ✏️ 编辑寄语
+             </button>
+           </div>
         </div>
       </article>
 
@@ -272,14 +446,21 @@ function renderMonthPage(month) {
     </div>
   `;
 
-  // 触发月份页面动画
+  // 触发页面动画
   requestAnimationFrame(() => {
     initMonthAnimations(month);
     initNavigationInteractions(month);
+    
+    // Bind Gallery Open
+    const photoSection = document.getElementById(`photo-section-${month}`);
+    if (photoSection) {
+        photoSection.addEventListener('click', () => {
+            galleryOverlay.open(month);
+        });
+    }
   });
 }
 
-// ... renderSummaryPage (保持不变，或稍后应用同样的 ambientIcons) ...
 
 /**
  * 渲染 Content Card 组件
@@ -367,13 +548,15 @@ function initMonthAnimations(month) {
     }, 200);
   }
 
-  // 初始化照片上传区域
+  // 初始化照片上传区域 - REMOVED: Now handled by GalleryOverlay
+  /* 
   const photoSection = document.getElementById(`photo-section-${month}`);
   if (photoSection) {
     photoUploadManager.init(month, photoSection, (photoUrl) => {
       console.log("照片已更新:", photoUrl ? "已上传" : "已删除");
     });
   }
+  */
 
   // 初始化内容编辑器 - Requirements: 12.1
   contentEditor.init(month, (savedData) => {
@@ -411,11 +594,11 @@ async function transitionToMonth(fromMonth, toMonth) {
   if (animationController.isTransitioning()) return;
 
   const background = document.getElementById("page-background");
-  const content = document.getElementById("content-card");
+  const content = document.getElementById("content-card"); // Old selector, kept for safety
   const decorations = document.querySelectorAll(".month-decoration");
   const progress = document.querySelector(".nav-progress-value");
 
-  // 执行页面切换动画序列
+  // 执行页面切换动画序列 (Slide OUT)
   await animationController.transitionToMonth(fromMonth, toMonth, {
     background,
     content,
@@ -425,7 +608,14 @@ async function transitionToMonth(fromMonth, toMonth) {
 
   // 动画完成后渲染新页面
   renderMonthPage(toMonth);
+  
+  // 执行新页面进场动画 (Slide IN)
+  const direction = toMonth > fromMonth ? "next" : "prev";
+  requestAnimationFrame(() => {
+      animationController.animateCurrentPageIn(toMonth, direction);
+  });
 }
+
 
 /**
  * 处理页面切换（带动画支持）
@@ -450,8 +640,23 @@ async function handlePageChange(page, month) {
 }
 
 // 应用初始化
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("宝宝的第一年 - 应用已加载");
+
+  // Initialize Demo Data if needed
+  initDemoData();
+
+  // Load photos from persistent storage
+  for (let i = 0; i <= 12; i++) {
+      try {
+          const photos = await storageManager.getMonthPhotos(i);
+          if (photos && photos.length > 0) {
+              stateManager.updateMonthData(i, { photos });
+          }
+      } catch (e) {
+          console.warn(`Failed to load photos for month ${i}`, e);
+      }
+  }
 
   // 初始化路由监听
   router.onRouteChange((page, month) => {
@@ -466,22 +671,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 订阅状态变化
   stateManager.subscribe((state) => {
-    console.log("状态更新:", state);
+    // console.log("状态更新:", state);
+  });
+
+  // 全局事件委托处理
+  document.getElementById("app").addEventListener("click", (e) => {
+    // 1. Photo Card / Upload / Gallery Click
+    const photoCard = e.target.closest("#photo-card-container") || 
+                      e.target.closest(".card-photo-section") ||
+                      e.target.closest(".month-content-card .card-photo-section");
+    
+    if (photoCard) {
+      if (router.currentPage === "month") {
+         galleryOverlay.open(router.currentMonth);
+      }
+      return;
+    }
+
+    // 2. Edit Button Click
+    const editBtn = e.target.closest(".edit-btn");
+    if (editBtn) {
+       contentEditor.enterEditMode();
+       return;
+    }
+
+    // 3. Navigation Buttons
+    const nextBtn = e.target.closest("#nav-next-btn");
+    const prevBtn = e.target.closest("#nav-prev-btn");
+
+    if (nextBtn && router.currentPage === "month") {
+        if (router.currentMonth < 12) router.navigate('month', router.currentMonth + 1);
+    }
+    
+    if (prevBtn && router.currentPage === "month") {
+        if (router.currentMonth > 0) router.navigate('month', router.currentMonth - 1);
+    }
   });
 
   // 初始渲染
-
   renderPage(router.currentPage, router.currentMonth);
 
   // 初始化键盘导航
   initKeyboardNavigation();
 
   // 初始化光标特效
-
   cursorEffectsInstance = new CursorEffects();
 
   // 初始化 previousMonth
-
   if (router.currentPage === "month") {
     previousMonth = router.currentMonth;
   }

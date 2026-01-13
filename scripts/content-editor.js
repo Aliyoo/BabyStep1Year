@@ -74,87 +74,88 @@ class ContentEditor {
     this.isEditing = true;
     this.originalData = this.getCurrentData();
     stateManager.toggleEditing(true);
-    this.renderEditForm();
+    this.renderEditModal();
   }
 
   /**
-   * 渲染编辑表单
+   * 渲染编辑弹窗 (Modal Style)
    * Requirements: 12.3, 12.4
    */
-  renderEditForm() {
-    const storySection = document.querySelector('.card-story-section');
-    const milestonesSection = document.querySelector('.card-milestones-section');
-    const actionsSection = document.querySelector('.card-actions');
-
-    if (!storySection || !milestonesSection || !actionsSection) return;
+  renderEditModal() {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('editor-modal');
+    if (existingModal) existingModal.remove();
 
     const data = this.originalData;
 
-    // 渲染故事编辑区域
-    storySection.innerHTML = `
-      <h2 class="story-title">成长故事</h2>
-      <div class="form-group">
-        <textarea 
-          class="form-textarea story-textarea" 
-          id="story-input"
-          placeholder="记录宝宝这个月的成长故事..."
-          aria-label="成长故事编辑"
-        >${data.story}</textarea>
-      </div>
-    `;
+    const modal = document.createElement('div');
+    modal.id = 'editor-modal';
+    modal.className = 'editor-modal';
+    modal.innerHTML = `
+      <div class="editor-modal-backdrop"></div>
+      <div class="editor-modal-content">
+        <header class="editor-modal-header">
+          <h2>编辑 ${this.currentMonth} 个月记录</h2>
+          <button class="editor-close-btn cancel-btn">&times;</button>
+        </header>
+        
+        <div class="editor-modal-body">
+          <div class="form-group">
+            <label class="form-label">成长故事</label>
+            <textarea 
+              class="form-textarea story-textarea" 
+              id="story-input"
+              placeholder="记录宝宝这个月的成长故事..."
+              rows="4"
+            >${data.story}</textarea>
+          </div>
 
-    // 渲染里程碑编辑区域
-    milestonesSection.innerHTML = `
-      <h2 class="milestones-title">成长里程碑</h2>
-      <div class="milestones-edit-grid">
-        ${data.milestones.map((m, index) => `
-          <div class="milestone-edit-item">
-            <label class="form-label">${m.label}</label>
-            <div class="milestone-edit-row">
-              <input 
-                type="text" 
-                class="form-input milestone-input" 
-                data-index="${index}"
-                value="${m.value || ''}"
-                placeholder="待记录"
-                aria-label="${m.label}数值"
-              />
-              <label class="milestone-checkbox-label">
-                <input 
-                  type="checkbox" 
-                  class="milestone-checkbox"
-                  data-index="${index}"
-                  ${m.completed ? 'checked' : ''}
-                  aria-label="${m.label}已完成"
-                />
-                <span class="checkbox-custom"></span>
-              </label>
+          <div class="form-group">
+            <label class="form-label">成长里程碑</label>
+            <div class="milestones-edit-grid">
+              ${data.milestones.map((m, index) => `
+                <div class="milestone-edit-item">
+                  <span class="milestone-edit-label">${m.label}</span>
+                  <input 
+                    type="text" 
+                    class="form-input milestone-input" 
+                    data-index="${index}"
+                    value="${m.value || ''}"
+                    placeholder="待记录"
+                  />
+                  <label class="milestone-checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      class="milestone-checkbox"
+                      data-index="${index}"
+                      ${m.completed ? 'checked' : ''}
+                    />
+                    <span>已完成</span>
+                  </label>
+                </div>
+              `).join('')}
             </div>
           </div>
-        `).join('')}
+        </div>
+
+        <footer class="editor-modal-footer">
+          <button class="btn btn-secondary cancel-btn">取消</button>
+          <button class="btn btn-primary save-btn">💾 保存</button>
+        </footer>
       </div>
     `;
 
-    // 渲染操作按钮
-    actionsSection.innerHTML = `
-      <button class="btn btn-secondary cancel-btn" aria-label="取消编辑">
-        取消
-      </button>
-      <button class="btn btn-primary save-btn" aria-label="保存更改">
-        💾 保存
-      </button>
-    `;
+    document.body.appendChild(modal);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      modal.classList.add('active');
+    });
 
-    // 添加编辑模式样式类
-    const contentCard = document.querySelector('.content-card');
-    if (contentCard) {
-      contentCard.classList.add('editing');
-    }
-
-    // 聚焦到故事输入框
+    // Focus on story input
     const storyInput = document.getElementById('story-input');
     if (storyInput) {
-      storyInput.focus();
+      setTimeout(() => storyInput.focus(), 100);
     }
   }
 
@@ -210,12 +211,31 @@ class ContentEditor {
   exitEditMode(data) {
     this.isEditing = false;
     stateManager.toggleEditing(false);
-    this.renderViewMode(data);
-
-    // 移除编辑模式样式类
-    const contentCard = document.querySelector('.content-card');
-    if (contentCard) {
-      contentCard.classList.remove('editing');
+    
+    // Close modal
+    const modal = document.getElementById('editor-modal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(() => modal.remove(), 300);
+    }
+    
+    // Update page display if data was saved
+    if (data && data !== this.originalData) {
+      const storyDisplay = document.getElementById('story-display');
+      if (storyDisplay) {
+        storyDisplay.textContent = data.story;
+      }
+      
+      // Update milestones grid
+      const milestonesGrid = document.querySelector('.mini-milestones-grid');
+      if (milestonesGrid) {
+        milestonesGrid.innerHTML = data.milestones.map(m => `
+          <div class="mini-milestone-item ${m.completed ? 'completed' : ''}">
+            <span class="mini-milestone-label">${m.label}</span>
+            <span class="mini-milestone-value">${m.value || '待记录'}</span>
+          </div>
+        `).join('');
+      }
     }
   }
 

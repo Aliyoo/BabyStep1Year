@@ -128,25 +128,25 @@ class StorageManager {
   // ==================== IndexedDB 操作 (照片存储) ====================
 
   /**
-   * 保存照片到 IndexedDB
+   * 保存月份照片列表
    * @param {number} month - 月份 (0-12)
-   * @param {Blob} file - 图片文件
+   * @param {string[]} photos - 图片 Data URL 数组
    * @returns {Promise<void>}
    */
-  async savePhoto(month, file) {
+  async saveMonthPhotos(month, photos) {
     await this.dbReady;
 
     if (typeof month !== 'number' || month < 0 || month > 12) {
       throw new Error('无效的月份值');
     }
 
-    if (!(file instanceof Blob)) {
-      throw new Error('无效的文件类型');
+    if (!Array.isArray(photos)) {
+      throw new Error('无效的照片数据');
     }
 
     // 如果 IndexedDB 不可用，降级到 localStorage
     if (!this.db) {
-      return this._savePhotoToLocalStorage(month, file);
+      return this._savePhotosToLocalStorage(month, photos);
     }
 
     return new Promise((resolve, reject) => {
@@ -155,7 +155,7 @@ class StorageManager {
 
       const photoData = {
         month: month,
-        blob: file,
+        photos: photos,
         timestamp: Date.now()
       };
 
@@ -167,20 +167,20 @@ class StorageManager {
   }
 
   /**
-   * 从 IndexedDB 获取照片
+   * 获取月份照片列表
    * @param {number} month - 月份 (0-12)
-   * @returns {Promise<string|null>} 图片的 Data URL 或 null
+   * @returns {Promise<string[]>} 图片 Data URL 数组
    */
-  async getPhoto(month) {
+  async getMonthPhotos(month) {
     await this.dbReady;
 
     if (typeof month !== 'number' || month < 0 || month > 12) {
-      return null;
+      return [];
     }
 
     // 如果 IndexedDB 不可用，从 localStorage 读取
     if (!this.db) {
-      return this._getPhotoFromLocalStorage(month);
+      return this._getPhotosFromLocalStorage(month);
     }
 
     return new Promise((resolve, reject) => {
@@ -190,16 +190,23 @@ class StorageManager {
 
       request.onsuccess = () => {
         const result = request.result;
-        if (!result || !result.blob) {
-          resolve(null);
-          return;
+        
+        // Handle migration from old single 'blob' format if necessary
+        if (result && result.blob) {
+            // Old format found: { month, blob }
+            // Convert blob to dataURL and return as single item array
+             const reader = new FileReader();
+             reader.onload = () => resolve([reader.result]);
+             reader.onerror = () => resolve([]); // Fail safe
+             reader.readAsDataURL(result.blob);
+             return;
         }
 
-        // 将 Blob 转换为 Data URL
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('读取照片失败'));
-        reader.readAsDataURL(result.blob);
+        if (result && Array.isArray(result.photos)) {
+            resolve(result.photos);
+        } else {
+            resolve([]);
+        }
       };
 
       request.onerror = () => reject(new Error('获取照片失败: ' + request.error));
@@ -207,11 +214,11 @@ class StorageManager {
   }
 
   /**
-   * 删除照片
+   * 删除所有照片（指定月份）
    * @param {number} month - 月份 (0-12)
    * @returns {Promise<void>}
    */
-  async deletePhoto(month) {
+  async deleteMonthPhotos(month) {
     await this.dbReady;
 
     if (typeof month !== 'number' || month < 0 || month > 12) {
@@ -219,7 +226,7 @@ class StorageManager {
     }
 
     if (!this.db) {
-      return this._deletePhotoFromLocalStorage(month);
+      return this._deletePhotosFromLocalStorage(month);
     }
 
     return new Promise((resolve, reject) => {
@@ -232,31 +239,37 @@ class StorageManager {
     });
   }
 
-
   // ==================== localStorage 降级方案 ====================
 
-  async _savePhotoToLocalStorage(month, file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          localStorage.setItem(`baby_journey_photo_${month}`, reader.result);
-          resolve();
-        } catch (e) {
-          reject(new Error('存储空间不足'));
-        }
-      };
-      reader.onerror = () => reject(new Error('读取文件失败'));
-      reader.readAsDataURL(file);
-    });
+  async _savePhotosToLocalStorage(month, photos) {
+    try {
+        localStorage.setItem(`baby_journey_photos_${month}`, JSON.stringify(photos));
+        return Promise.resolve();
+    } catch(e) {
+        return Promise.reject(new Error('存储空间不足'));
+    }
   }
 
-  _getPhotoFromLocalStorage(month) {
-    return localStorage.getItem(`baby_journey_photo_${month}`);
+  _getPhotosFromLocalStorage(month) {
+    const raw = localStorage.getItem(`baby_journey_photos_${month}`);
+    if (!raw) {
+        // Fallback check for old key
+        const oldSingle = localStorage.getItem(`baby_journey_photo_${month}`);
+        if (oldSingle) return Promise.resolve([oldSingle]);
+        return Promise.resolve([]);
+    }
+    try {
+        return Promise.resolve(JSON.parse(raw));
+    } catch {
+        return Promise.resolve([]);
+    }
   }
 
-  _deletePhotoFromLocalStorage(month) {
+  _deletePhotosFromLocalStorage(month) {
+    localStorage.removeItem(`baby_journey_photos_${month}`);
+    // Also clear old key
     localStorage.removeItem(`baby_journey_photo_${month}`);
+    return Promise.resolve();
   }
 
   // ==================== 清理方法 ====================

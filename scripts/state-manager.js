@@ -253,13 +253,17 @@ class StateManager {
    * 初始化月份数据
    * @private
    */
+  /**
+   * 初始化月份数据
+   * @private
+   */
   _initMonthsData() {
     return MONTHS_CONFIG.map(config => ({
       month: config.month,
       title: config.title,
       story: config.defaultStory,
       milestones: [...config.defaultMilestones],
-      photoUrl: null,
+      photos: [], // Expanded from single photoUrl
       customized: false
     }));
   }
@@ -289,7 +293,15 @@ class StateManager {
    */
   getMonthData(month) {
     if (month < 0 || month > 12) return null;
-    return this.state.monthsData[month];
+    const data = this.state.monthsData[month];
+    
+    // Migration/Compatibility: If old data has photoUrl but no photos, fix it
+    if (data.photoUrl && (!data.photos || data.photos.length === 0)) {
+        data.photos = [data.photoUrl];
+        delete data.photoUrl;
+    }
+    
+    return data;
   }
 
   /**
@@ -309,6 +321,20 @@ class StateManager {
   updateMonthData(month, data) {
     if (month < 0 || month > 12) return;
     
+    // Handle photoUrl -> photos migration in updates if necessary
+    if (data.photoUrl && !data.photos) {
+        // If updating a single photoUrl, append it or replace? 
+        // For safety in this new model, we treat it as adding/setting the first photo
+        // But better to use addPhoto instead. This is just failsafe.
+        const currentPhotos = this.state.monthsData[month].photos || [];
+        if (!currentPhotos.includes(data.photoUrl)) {
+             data.photos = [...currentPhotos, data.photoUrl];
+        } else {
+             data.photos = currentPhotos;
+        }
+        delete data.photoUrl;
+    }
+
     this.state.monthsData[month] = {
       ...this.state.monthsData[month],
       ...data,
@@ -316,6 +342,39 @@ class StateManager {
     };
     this._notifyListeners();
   }
+
+  /**
+   * 添加照片到月份
+   * @param {number} month
+   * @param {string} photoUrl
+   */
+  addMonthPhoto(month, photoUrl) {
+      if (month < 0 || month > 12 || !photoUrl) return;
+      const currentData = this.getMonthData(month);
+      const currentPhotos = currentData.photos || [];
+      
+      this.updateMonthData(month, {
+          photos: [...currentPhotos, photoUrl]
+      });
+  }
+
+  /**
+   * 移除照片
+   * @param {number} month
+   * @param {number} index
+   */
+  removeMonthPhoto(month, index) {
+      if (month < 0 || month > 12) return;
+      const currentData = this.getMonthData(month);
+      const currentPhotos = currentData.photos || [];
+      
+      if (index >= 0 && index < currentPhotos.length) {
+          const newPhotos = [...currentPhotos];
+          newPhotos.splice(index, 1);
+          this.updateMonthData(month, { photos: newPhotos });
+      }
+  }
+
 
   /**
    * 设置当前月份

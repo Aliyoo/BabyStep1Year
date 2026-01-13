@@ -45,10 +45,10 @@ pnpm install
 ### 启动开发服务器
 
 ```bash
-pnpm run dev
+pnpm dev
 ```
 
-访问 http://localhost:3000 查看效果。
+访问 http://localhost:3333 查看效果。
 
 ### 运行测试
 

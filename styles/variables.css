@@ -59,10 +59,10 @@
         #dda0dd
     );
 
-    /* 首页柔和渐变 (梦幻宝宝风格) */
-    --home-gradient-start: #fff0f5; /* 薰衣草腮红 */
-    --home-gradient-end: #e6e6fa; /* 淡紫色 */
-    --home-card-bg: rgba(255, 255, 255, 0.65); /* 更透亮的白色 */
+    /* 首页柔和渐变 (梦幻宝宝风格) - 天空蓝到珊瑚橙 */
+    --home-gradient-start: #b8e6f6; /* 天空蓝 */
+    --home-gradient-end: #ffc5a8; /* 珊瑚橙 */
+    --home-card-bg: rgba(255, 255, 255, 0.5); /* 更轻透的白色 */
     --home-card-border: rgba(255, 255, 255, 0.8);
 
     /* 通用颜色 */

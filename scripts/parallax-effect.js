@@ -49,8 +49,8 @@ export const parallaxEffect = {
     if (!this.container) return;
     const rect = this.container.getBoundingClientRect();
     // 计算相对于中心的坐标 (-1 到 1)
-    this.targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    this.targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    this.targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 3;
+    this.targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 3;
   },
 
   onMouseLeave() {

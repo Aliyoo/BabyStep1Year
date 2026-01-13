@@ -213,37 +213,110 @@ class AnimationController {
    * @param {HTMLElement} elements.progress - 进度显示元素
    * @returns {Promise<void>}
    */
+  /**
+   * 执行完整的月份切换动画序列 (Updated for Split Layout)
+   * Requirements: 4.1-4.5, Layout Redesign Animation
+   * @param {number} fromMonth - 起始月份
+   * @param {number} toMonth - 目标月份
+   * @param {Object} elements - 页面元素引用
+   * @returns {Promise<void>}
+   */
   async transitionToMonth(fromMonth, toMonth, elements) {
     if (this.isAnimating) return;
     this.isAnimating = true;
 
-    const { background, content, decorations, progress } = elements;
-    const fromProgress = Math.round((fromMonth / 12) * 100);
-    const toProgress = Math.round((toMonth / 12) * 100);
+    // elements might be partial in new layout, re-select critical ones
+    // Note: old layout elements might not exist, we need to handle gracefully
+    // Current Page Elements (Old Content)
+    const oldTextCol = document.getElementById("layout-text-col");
+    const oldVisualCol = document.getElementById("layout-visual-col");
+    const oldContainer = document.getElementById("split-layout-container");
+    const background = document.getElementById("page-background");
+    const decorations = document.querySelectorAll(".month-decoration");
+    
+    // Determine Direction
+    const direction = toMonth > fromMonth ? "next" : "prev";
+    const slideOutTo = direction === "next" ? "-50px" : "50px"; // Next: move left, Prev: move right
 
     try {
-      // 1. 开始背景渐变过渡 (同时进行)
+      // 1. Parallel: Background Gradient Transition
       const backgroundPromise = this.transitionBackground(background, toMonth);
 
-      // 2. 内容淡出
-      await this.fadeOut(content);
-
-      // 3. 装饰图片过渡 (与背景同时)
+      // 2. Parallel: Decorations Fade Out
       const decorationPromise = this.transitionDecorations(decorations);
 
-      // 4. 等待背景过渡完成
+      // 3. Staggered Slide Out (if elements exist)
+      if (oldTextCol && oldVisualCol) {
+          // Fade out & Slide
+          const duration = 400;
+          
+          oldTextCol.style.transition = `all ${duration}ms ease-in`;
+          oldTextCol.style.opacity = '0';
+          oldTextCol.style.transform = `translateX(${slideOutTo})`;
+
+          // Visual column leaves slightly later or earlier? Let's do slightly later for trail effect
+          setTimeout(() => {
+             oldVisualCol.style.transition = `all ${duration}ms ease-in`;
+             oldVisualCol.style.opacity = '0';
+             oldVisualCol.style.transform = `translateX(${slideOutTo})`;
+          }, 100);
+
+          await new Promise(r => setTimeout(r, duration + 100));
+      } else {
+          // Fallback for old layout content (if any remains)
+           const content = document.getElementById("content-card");
+           await this.fadeOut(content);
+      }
+
+      // 4. Wait for background (main visual cue)
       await backgroundPromise;
-
-      // 5. 进度数字动画
-      this.animateProgress(progress, fromProgress, toProgress);
-
-      // 6. 等待装饰图片过渡完成
-      await decorationPromise;
+      
+      // Note: renderMonthPage will be called AFTER this function in app.js
+      // We need to wait for the DOM to update to animate IN. 
+      // This function only handles OUT animation + bg/decorations.
+      // IN animation must be handled by initMonthAnimations or similar hook in the new page.
 
     } finally {
       this.isAnimating = false;
     }
   }
+
+  /**
+   * Prepare and animate new content IN (Called after render)
+   */
+  async animateCurrentPageIn(month, direction = "next") {
+      const textCol = document.getElementById("layout-text-col");
+      const visualCol = document.getElementById("layout-visual-col");
+      
+      if (!textCol || !visualCol) return;
+
+      const slideInFrom = direction === "next" ? "50px" : "-50px"; 
+
+      // Initialize state (hidden & offset)
+      textCol.style.opacity = '0';
+      textCol.style.transform = `translateX(${slideInFrom})`;
+      visualCol.style.opacity = '0';
+      visualCol.style.transform = `translateX(${slideInFrom})`;
+
+      // Force reflow
+      textCol.offsetHeight;
+
+      // Animate IN
+      const duration = 600;
+      
+      // Text IN first
+      textCol.style.transition = `all ${duration}ms cubic-bezier(0.2, 0.8, 0.2, 1)`;
+      textCol.style.opacity = '1';
+      textCol.style.transform = 'translateX(0)';
+
+      // Visual IN second (Staggered)
+      setTimeout(() => {
+          visualCol.style.transition = `all ${duration}ms cubic-bezier(0.2, 0.8, 0.2, 1)`;
+          visualCol.style.opacity = '1';
+          visualCol.style.transform = 'translateX(0)';
+      }, 150);
+  }
+
 
   /**
    * 准备内容淡入（在新内容渲染后调用）

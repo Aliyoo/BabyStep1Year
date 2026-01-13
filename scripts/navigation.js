@@ -75,12 +75,11 @@ export function renderNavigationBar(month) {
         aria-label="上一个月"
         ${prevDisabled ? 'disabled aria-disabled="true"' : ''}
       >
-        <span>❮</span>
+        <span>←</span>
       </button>
       
       <div class="nav-progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
-        <div class="nav-progress-text" style="opacity:0; position:absolute;">${month} Months</div>
-        <div class="nav-progress-bar" onclick="void(0)"> <!-- 添加点击事件占位 -->
+        <div class="nav-progress-bar" onclick="void(0)">
             <div class="nav-progress-value" style="width: ${progress}%"></div>
         </div>
       </div>
@@ -90,7 +89,7 @@ export function renderNavigationBar(month) {
         aria-label="下一个月"
         ${nextDisabled ? 'disabled aria-disabled="true"' : ''}
       >
-        <span>❯</span>
+        <span>→</span>
       </button>
 
       <span class="nav-label">1st Year</span>
